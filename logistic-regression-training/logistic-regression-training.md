@@ -1,240 +1,517 @@
-## What Logistic Regression Does
+What Logistic Regression Does
 
-Logistic regression is a **binary classification** algorithm. Given input features, it predicts the probability that an example belongs to the positive class (class 1).
+Logistic regression is a binary classification algorithm. Given a set of input features, it predicts the probability that an example belongs to the positive class (class 1).
 
-Despite its name, logistic regression is used for **classification**, not regression. The "regression" part refers to the fact that we are fitting a model to data, similar to linear regression, but the output is a probability between 0 and 1.
+Despite its name, logistic regression is used for classification, not regression. The term "regression" comes from the fact that the model learns a set of coefficients, similar to linear regression. However, instead of predicting an unrestricted real-valued output, logistic regression transforms the model's linear output into a probability between 0 and 1.
 
-The model answers questions like:
+The model can answer questions such as:
 
-- Is this email spam or not spam?
-- Will this customer churn or stay?
-- Is this tumor malignant or benign?
+Is this email spam or not spam?
+
+Will this customer churn or stay?
+
+Is this tumor malignant or benign?
+
+
 
 ---
 
-## The Model Structure
+The Model Structure
 
-Logistic regression combines two parts:
+Logistic regression has two main steps.
 
-**Part 1: Linear combination**
+Part 1: Linear Combination
 
-$$
+First, the model computes a linear combination of the input features:
+
 z = Xw + b
-$$
 
 where:
 
-- $X$ is the input matrix with shape (n_samples, n_features)
-- $w$ is the weight vector with shape (n_features,)
-- $b$ is the bias, a scalar broadcast across all samples
-- $z$ is the linear output with shape (n_samples,), one logit per example
+X is the input matrix with shape (n_samples, n_features)
 
-**Part 2: Sigmoid activation**
+w is the weight vector with shape (n_features,)
 
-$$
-p = \sigma(z) = \frac{1}{1 + e^{-z}}
-$$
+b is the bias, a scalar broadcast across all samples
 
-The sigmoid function squashes any real number into the range $(0, 1)$, which we interpret as a probability.
+z is the logit (linear output) with shape (n_samples,)
 
-The complete model:
 
-$$
-p = \sigma(Xw + b) = \frac{1}{1 + e^{-(Xw + b)}}
-$$
+For a single example with feature vector x:
+
+z = xᵀw + b
+
+The value z can be any real number: positive, negative, or zero.
+
+Part 2: Sigmoid Function
+
+The logit is then passed through the sigmoid function:
+
+p = σ(z) = 1 / (1 + e⁻ᶻ)
+
+The sigmoid maps any real-valued input to the range (0, 1), which we interpret as the model's predicted probability of class 1.
+
+Therefore, the complete model is:
+
+p = σ(Xw + b)
+
+or equivalently:
+
+p = 1 / (1 + e⁻⁽ˣʷ⁺ᵇ⁾)
+
+For each example:
+
+pᵢ = P(yᵢ = 1 | xᵢ)
+
+So pᵢ represents the model's estimated probability that example i belongs to class 1.
+
 
 ---
 
-## Understanding the Sigmoid Function
+Understanding the Sigmoid Function
 
-The sigmoid function $\sigma(z) = \frac{1}{1 + e^{-z}}$ has these properties:
+The sigmoid function is:
 
-- Output is always between 0 and 1
-- $\sigma(0) = 0.5$ (the decision boundary)
-- $\sigma(z) \to 1$ as $z \to +\infty$
-- $\sigma(z) \to 0$ as $z \to -\infty$
-- The function is symmetric: $\sigma(-z) = 1 - \sigma(z)$
+σ(z) = 1 / (1 + e⁻ᶻ)
+
+It has several important properties:
+
+Its output is always strictly between 0 and 1.
+
+σ(0) = 0.5.
+
+σ(z) → 1 as z → +∞.
+
+σ(z) → 0 as z → -∞.
+
+It satisfies the symmetry property:
+
+
+σ(-z) = 1 - σ(z)
 
 Some example values:
 
-- $\sigma(-5) \approx 0.0067$
-- $\sigma(-2) \approx 0.119$
-- $\sigma(0) = 0.5$
-- $\sigma(2) \approx 0.881$
-- $\sigma(5) \approx 0.9933$
+σ(-5) ≈ 0.0067
 
-The sigmoid's derivative has a convenient form:
+σ(-2) ≈ 0.1192
 
-$$
-\frac{d\sigma}{dz} = \sigma(z) \cdot (1 - \sigma(z))
-$$
+σ(0) = 0.5
 
-This derivative is used during backpropagation.
+σ(2) ≈ 0.8808
+
+σ(5) ≈ 0.9933
+
+
+The sigmoid also has a particularly convenient derivative:
+
+dσ/dz = σ(z)(1 - σ(z))
+
+If we write p = σ(z), this becomes:
+
+dp/dz = p(1 - p)
+
+This derivative is important when deriving the gradient used to train logistic regression.
+
 
 ---
 
-## Binary Cross-Entropy Loss
+Binary Cross-Entropy Loss
 
-To train logistic regression, we need a loss function that measures how wrong our predictions are. For binary classification, we use **binary cross-entropy** (also called log loss):
+The model's predictions need to be compared with the true labels. For binary classification, logistic regression commonly uses binary cross-entropy, also called log loss.
 
-$$
-L = -\frac{1}{n} \sum_{i=1}^{n} \left[ y_i \log(p_i) + (1 - y_i) \log(1 - p_i) \right]
-$$
+For n training examples:
+
+L = -(1/n) Σᵢ [yᵢ log(pᵢ) + (1 - yᵢ) log(1 - pᵢ)]
 
 where:
 
-- $n$ is the number of training examples
-- $y_i$ is the true label (0 or 1)
-- $p_i$ is the predicted probability for example $i$
+n is the number of training examples
 
-**Why this formula works:**
+yᵢ ∈ {0, 1} is the true label
 
-When $y_i = 1$ (positive class):
-- The loss becomes $-\log(p_i)$
-- If $p_i$ is close to 1 (correct prediction), $-\log(p_i) \approx 0$ (low loss)
-- If $p_i$ is close to 0 (wrong prediction), $-\log(p_i) \to \infty$ (high loss)
+pᵢ is the predicted probability of class 1
 
-When $y_i = 0$ (negative class):
-- The loss becomes $-\log(1 - p_i)$
-- If $p_i$ is close to 0 (correct prediction), $-\log(1 - p_i) \approx 0$ (low loss)
-- If $p_i$ is close to 1 (wrong prediction), $-\log(1 - p_i) \to \infty$ (high loss)
 
----
+Why Does This Formula Work?
 
-## Gradient Descent for Logistic Regression
+When yᵢ = 1
 
-Training means finding the weights $w$ and bias $b$ that minimize the loss. We use **gradient descent**:
+The loss for that example becomes:
 
-1. Start with initial values for $w$ and $b$ (often zeros)
-2. Compute the predictions $p = \sigma(Xw + b)$
-3. Compute the loss $L$
-4. Compute the gradients $\frac{\partial L}{\partial w}$ and $\frac{\partial L}{\partial b}$
-5. Update the parameters in the opposite direction of the gradient
-6. Repeat until convergence
+Lᵢ = -log(pᵢ)
 
-**The gradients:**
+If the model predicts a high probability for class 1:
 
-For logistic regression with binary cross-entropy, the gradients have elegant forms:
+pᵢ ≈ 1
 
-$$
-\frac{\partial L}{\partial w} = \frac{1}{n} X^T (p - y)
-$$
+then:
 
-$$
-\frac{\partial L}{\partial b} = \frac{1}{n} \sum_{i=1}^{n} (p_i - y_i)
-$$
+-log(pᵢ) ≈ 0
 
-where $(p - y)$ is the vector of prediction errors.
+So the loss is small.
 
-**The update rules:**
+If the model predicts a very low probability:
 
-$$
-w \leftarrow w - \alpha \cdot \frac{\partial L}{\partial w}
-$$
+pᵢ ≈ 0
 
-$$
-b \leftarrow b - \alpha \cdot \frac{\partial L}{\partial b}
-$$
+then:
 
-where $\alpha$ is the learning rate.
+-log(pᵢ) → ∞
 
----
+So confidently incorrect predictions receive a very large penalty.
 
-## Deriving the Gradients
+When yᵢ = 0
 
-The gradient derivation combines the chain rule with the sigmoid derivative. For a single example:
+The loss becomes:
 
-$$
-\frac{\partial L}{\partial z} = p - y
-$$
+Lᵢ = -log(1 - pᵢ)
 
-This remarkably simple result comes from the fact that cross-entropy and sigmoid are mathematically paired. The derivative of the loss with respect to the logit is just the prediction error.
+If the model predicts:
 
-Then by the chain rule:
+pᵢ ≈ 0
 
-$$
-\frac{\partial L}{\partial w} = \frac{\partial L}{\partial z} \cdot \frac{\partial z}{\partial w} = (p - y) \cdot x
-$$
+then the loss is close to zero.
 
-$$
-\frac{\partial L}{\partial b} = \frac{\partial L}{\partial z} \cdot \frac{\partial z}{\partial b} = (p - y) \cdot 1
-$$
+If the model predicts:
 
-Averaging over all examples gives the batch gradients.
+pᵢ ≈ 1
+
+then the loss becomes very large.
+
+Thus, binary cross-entropy rewards confident correct predictions and strongly penalizes confident incorrect predictions.
+
 
 ---
 
-## A Training Example
+Gradient Descent for Logistic Regression
 
-Consider a simple dataset with 2 features and 4 examples:
+Training logistic regression means finding values of w and b that minimize the loss.
 
-Features $X$:
+One way to do this is gradient descent.
 
-- Example 1: [1.0, 2.0]
-- Example 2: [2.0, 1.0]
-- Example 3: [-1.0, -1.0]
-- Example 4: [-2.0, -2.0]
+The basic training process is:
 
-Labels $y$: [1, 1, 0, 0]
+1. Initialize w and b.
 
-**Initialization:**
 
-$w = [0, 0]$, $b = 0$
+2. Compute the logits: z = Xw + b
 
-**First forward pass:**
 
-$z = Xw + b = [0, 0, 0, 0]$
+3. Compute the probabilities: p = σ(z)
 
-$p = \sigma(z) = [0.5, 0.5, 0.5, 0.5]$
 
-All predictions are 0.5 (maximum uncertainty).
+4. Compute the loss L.
 
-**Compute gradients:**
 
-Error vector: $p - y = [0.5 - 1, 0.5 - 1, 0.5 - 0, 0.5 - 0] = [-0.5, -0.5, 0.5, 0.5]$
+5. Compute the gradients with respect to w and b.
 
-$\frac{\partial L}{\partial w} = \frac{1}{4} X^T (p - y)$
 
-$\frac{\partial L}{\partial b} = \frac{1}{4} \sum(p - y) = 0$
+6. Update the parameters in the opposite direction of the gradient.
 
-**Update parameters:**
 
-With learning rate $\alpha = 0.1$, update $w$ and $b$. The weights will adjust to increase predictions for positive examples and decrease predictions for negative examples.
+7. Repeat until the loss converges or another stopping criterion is reached.
 
-After many iterations, the model learns weights that separate the two classes.
 
----
 
-## Convergence and Learning Rate
+For binary cross-entropy combined with the sigmoid function, the gradients simplify nicely.
 
-The learning rate $\alpha$ controls how big each update step is:
+The gradient with respect to the weights is:
 
-- Too large: the algorithm may overshoot and diverge
-- Too small: the algorithm converges very slowly
-- Just right: smooth convergence to the minimum
+∂L/∂w = (1/n) Xᵀ(p - y)
 
-Typical values range from 0.001 to 0.1 depending on the problem.
+The gradient with respect to the bias is:
 
-**Signs of good convergence:**
+∂L/∂b = (1/n) Σᵢ(pᵢ - yᵢ)
 
-- Loss decreases steadily over iterations
-- Loss eventually plateaus at a minimum value
-- Parameter values stabilize
+Here, (p - y) represents the prediction error for each example.
 
-**Signs of problems:**
+Parameter Updates
 
-- Loss increases or oscillates wildly (learning rate too high)
-- Loss decreases extremely slowly (learning rate too low)
-- Loss reaches NaN (numerical overflow, often from extreme predictions)
+Using learning rate α, gradient descent updates the parameters as:
+
+w ← w - α(∂L/∂w)
+
+and:
+
+b ← b - α(∂L/∂b)
+
+The negative sign is important because we move in the direction that decreases the loss.
+
 
 ---
 
-## Making Predictions
+Deriving the Gradients
 
-After training, use the learned $w$ and $b$ to make predictions:
+The elegant gradient formulas come from combining the chain rule, the sigmoid derivative, and the binary cross-entropy loss.
 
-1. Compute $p = \sigma(Xw + b)$
-2. If $p \geq 0.5$, predict class 1
-3. If $p < 0.5$, predict class 0
+For a single example, the loss is:
 
-The threshold 0.5 is the default decision boundary. In practice, you might adjust this threshold based on the costs of false positives vs. false negatives.
+L = -[y log(p) + (1 - y) log(1 - p)]
+
+Since:
+
+p = σ(z)
+
+we can use the chain rule:
+
+∂L/∂z = (∂L/∂p)(∂p/∂z)
+
+First:
+
+∂L/∂p = -y/p + (1 - y)/(1 - p)
+
+And because:
+
+∂p/∂z = p(1 - p)
+
+we get:
+
+∂L/∂z = [-y/p + (1 - y)/(1 - p)]p(1 - p)
+
+which simplifies to:
+
+∂L/∂z = p - y
+
+This is one of the most useful results in logistic regression: the derivative of binary cross-entropy with respect to the logit is simply the prediction error.
+
+Now consider the logit:
+
+z = xᵀw + b
+
+Its derivatives are:
+
+∂z/∂w = x
+
+and:
+
+∂z/∂b = 1
+
+Therefore, by the chain rule:
+
+∂L/∂w = (∂L/∂z)(∂z/∂w) = (p - y)x
+
+and:
+
+∂L/∂b = (∂L/∂z)(∂z/∂b) = p - y
+
+Averaging these gradients over all training examples gives:
+
+∂L/∂w = (1/n) Xᵀ(p - y)
+
+and:
+
+∂L/∂b = (1/n) Σᵢ(pᵢ - yᵢ)
+
+
+---
+
+A Training Example
+
+Consider a simple dataset with two features and four examples.
+
+Features
+
+X = [[1, 2], [2, 1], [-1, -1], [-2, -2]]
+
+Labels
+
+y = [1, 1, 0, 0]
+
+Initialize:
+
+w = [0, 0]
+
+b = 0
+
+First Forward Pass
+
+The logits are:
+
+z = Xw + b
+
+Since w and b are both zero:
+
+z = [0, 0, 0, 0]
+
+Applying the sigmoid:
+
+p = [0.5, 0.5, 0.5, 0.5]
+
+So initially, the model assigns a probability of 0.5 to every example.
+
+This makes sense: before learning anything, the model has no information that favors either class.
+
+Compute the Gradient
+
+The error vector is:
+
+p - y = [-0.5, -0.5, 0.5, 0.5]
+
+The weight gradient is:
+
+∂L/∂w = (1/4) Xᵀ(p - y)
+
+We have:
+
+Xᵀ = [[1, 2, -1, -2], [2, 1, -1, -2]]
+
+Therefore:
+
+Xᵀ(p - y) = [-2.5, -2.5]
+
+and hence:
+
+∂L/∂w = [-0.625, -0.625]
+
+For the bias:
+
+∂L/∂b = (1/4)(-0.5 - 0.5 + 0.5 + 0.5) = 0
+
+So:
+
+∂L/∂b = 0
+
+First Parameter Update
+
+With learning rate:
+
+α = 0.1
+
+the new weights are:
+
+w ← w - 0.1[-0.625, -0.625]
+
+Therefore:
+
+w = [0.0625, 0.0625]
+
+The bias remains:
+
+b = 0
+
+Notice what happened: the weights became positive. Since the positive examples have positive feature values and the negative examples have negative feature values, positive weights increase the logits for the positive examples and decrease them for the negative examples.
+
+This is exactly the direction we want.
+
+After many iterations, the model learns parameters that separate the two classes.
+
+
+---
+
+Convergence and Learning Rate
+
+The learning rate α controls the size of each gradient-descent update.
+
+Too large: updates can overshoot the minimum, causing oscillation or divergence.
+
+Too small: training can be unnecessarily slow.
+
+Appropriate: the loss generally decreases toward a minimum.
+
+
+There is no universal "correct" learning rate. Values such as 0.001, 0.01, or 0.1 can work depending on the scale of the features, the dataset, and the optimization method.
+
+Feature scaling can make optimization substantially easier when features have very different scales.
+
+Signs of Good Convergence
+
+Typical signs include:
+
+The training loss decreases.
+
+The loss eventually levels off.
+
+Parameter updates become smaller.
+
+The optimization reaches a stable solution.
+
+
+Signs of Problems
+
+Possible warning signs include:
+
+Loss oscillates or increases → the learning rate may be too large.
+
+Loss decreases extremely slowly → the learning rate may be too small or the features may be poorly scaled.
+
+Loss becomes NaN or infinite → numerical instability may be occurring.
+
+
+In practice, implementations should compute the loss and sigmoid carefully to avoid numerical overflow or underflow. Many libraries instead optimize the log-loss directly from the logits using a numerically stable formulation.
+
+
+---
+
+Making Predictions
+
+After training, the model has learned w and b.
+
+For a new example:
+
+Step 1: Compute the logit
+
+z = xᵀw + b
+
+Step 2: Convert the logit to a probability
+
+p = σ(z)
+
+Step 3: Convert the probability into a class prediction
+
+Using the default threshold of 0.5:
+
+ŷ = 1 if p ≥ 0.5
+
+ŷ = 0 if p < 0.5
+
+Because:
+
+σ(0) = 0.5
+
+the threshold p = 0.5 corresponds exactly to:
+
+z = 0
+
+Therefore, the decision boundary is:
+
+xᵀw + b = 0
+
+This is an important property of logistic regression: the probability changes nonlinearly through the sigmoid, but the decision boundary in feature space is linear.
+
+The threshold does not have to be 0.5. In practice, it can be adjusted depending on the relative costs of false positives and false negatives.
+
+
+---
+
+The Big Picture
+
+The entire logistic regression pipeline can be summarized as:
+
+X → linear model → z = Xw + b → sigmoid → p = σ(z) → threshold → ŷ
+
+During training:
+
+X, y → z → p → L → gradients → update w, b
+
+The key ideas to remember are:
+
+1. Linear layer: z = Xw + b
+
+
+2. Sigmoid: p = σ(z)
+
+
+3. Loss: binary cross-entropy
+
+
+4. Gradient: ∇wL = (1/n)Xᵀ(p - y)
+
+
+5. Update: move parameters opposite the gradient
+
+
+6. Decision boundary: xᵀw + b = 0
+
+
+
+The most important intuition is that logistic regression learns a linear decision boundary, while the sigmoid converts the linear score into a value that can be interpreted as a probability.
